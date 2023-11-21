@@ -1,0 +1,6 @@
+# Q_avg=4.4 ml/s  period=951
+# This a sample for custom flow rate function in ml/s
+def flow_rate(t, period):
+    if t < period/2.0:
+       return 5E-1
+    return 1

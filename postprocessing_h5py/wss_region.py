@@ -48,12 +48,45 @@ def natural_keys(text):
     '''
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
+def get_idx_of_time(xdmf_file, t):
+    file1 = open(xdmf_file, 'r') 
+    Lines = file1.readlines() 
+    h5_ts=[]
+    time_ts=[]
+    index_ts=[]
+    
+    # This loop goes through the xdmf output file and gets the time value (time_ts), associated 
+    # .h5 file (h5_ts) and index of each timestep inthe corresponding h5 file (index_ts)
+    for line in Lines: 
+        if '<Time Value' in line:
+            time_pattern = '<Time Value="(.+?)"'
+            time_str = re.findall(time_pattern, line)
+            time = float(time_str[0])
+            time_ts.append(time)
+
+        elif 'VisualisationVector' in line:
+            #print(line)
+            h5_pattern = '"HDF">(.+?):/'
+            h5_str = re.findall(h5_pattern, line)
+            h5_ts.append(h5_str[0])
+
+            index_pattern = "VisualisationVector/(.+?)</DataItem>"
+            index_str = re.findall(index_pattern, line)
+            index = int(index_str[0])
+            index_ts.append(index)
+
+    time_between_files = time_ts[2] - time_ts[1] # Calculate the time between files from xdmf file
+
+    idx_of_time = index_ts[np.argmin(np.abs(np.array(time_ts)-t))] # here is your result
+    print(idx_of_time)
+    return idx_of_time
+
 def create_visualizations(case_path, mesh_name, save_deg, start_t, end_t, sampling_region, fluid_sampling_domain_ID, solid_sampling_domain_ID, r_sphere, x_sphere, y_sphere, z_sphere):
 
     case_name = os.path.basename(os.path.normpath(case_path)) # obtains only last folder in case_path
     visualization_path = postprocessing_common_h5py.get_visualization_path(case_path)
     
-
+    t_peak_sys = 3.0795
     # Get Mesh
     if save_deg == 1:
         mesh_path = case_path + "/mesh/" + mesh_name +".h5" # Mesh path. Points to the corner-node input mesh
@@ -68,13 +101,25 @@ def create_visualizations(case_path, mesh_name, save_deg, start_t, end_t, sampli
     region_flow_metrics = [ ] 
     region_flow_metric_names = [ ]
     # 1 Read in WSS h5 files
-    for WSS_filename in ["WSS.h5","RRT.h5","OSI.h5","TWSSG.h5"]:
+    for WSS_filename in ["WSS_ts.h5", "WSS.h5","RRT.h5","OSI.h5","TWSSG.h5"]:
 
         WSS_file = os.path.join(visualization_separate_domain_folder, WSS_filename)
-        WSS_data = postprocessing_common_pv.get_data_at_idx(WSS_file,0)
+        if "WSS_ts.h5" in WSS_file:
+            xdmf_file = WSS_file.replace(".h5", ".xdmf")
+            t_idx = get_idx_of_time(xdmf_file, t_peak_sys)
+        else:
+            t_idx = 0
+
+        WSS_data = postprocessing_common_pv.get_data_at_idx(WSS_file,t_idx)
         vectorData = h5py.File(WSS_file) 
-        points = np.array(vectorData["Mesh/mesh/geometry"])
-        element_connectivity = np.array(vectorData["Mesh/mesh/topology"])
+
+        if "WSS_ts.h5" in WSS_file:
+            points = np.array(vectorData["Mesh/0/mesh/geometry"])
+            element_connectivity = np.array(vectorData["Mesh/0/mesh/topology"])
+        else:
+            points = np.array(vectorData["Mesh/mesh/geometry"])
+            element_connectivity = np.array(vectorData["Mesh/mesh/topology"])
+
         mesh, surf = postprocessing_common_pv.assemble_tri_mesh_arrays(points,element_connectivity)
         mesh.point_arrays['wss_quantity'] = WSS_data # Assign scalar to mesh
 
@@ -96,10 +141,18 @@ def create_visualizations(case_path, mesh_name, save_deg, start_t, end_t, sampli
         WSS_max = np.max(mesh.point_arrays['wss_quantity'])
         WSS_perc99_region = np.percentile(WSS_Region, 99)
         WSS_max_region = np.percentile(WSS_Region,100)
+        WSS_avg_region = np.percentile(WSS_Region,50)
+        WSS_min_region = np.percentile(WSS_Region,0)
+
         region_flow_metrics.append(WSS_max_region)
-        region_flow_metric_names.append(WSS_filename.replace(".h5", "_max_region"))
+        region_flow_metric_names.append(WSS_filename.replace(".h5", "_max_region").replace("WSS_ts", "WSS_ts_"+str(t_idx)))
         region_flow_metrics.append(WSS_perc99_region)
-        region_flow_metric_names.append(WSS_filename.replace(".h5", "_99th_percentile_region"))
+        region_flow_metric_names.append(WSS_filename.replace(".h5", "_99th_percentile_region").replace("WSS_ts", "WSS_ts_"+str(t_idx)))
+        region_flow_metrics.append(WSS_avg_region)
+        region_flow_metric_names.append(WSS_filename.replace(".h5", "_avg_region").replace("WSS_ts", "WSS_ts_"+str(t_idx)))
+        region_flow_metrics.append(WSS_min_region)
+        region_flow_metric_names.append(WSS_filename.replace(".h5", "_min_region").replace("WSS_ts", "WSS_ts_"+str(t_idx)))
+
         print("Calculated regional maxima for ", WSS_filename)
 
 

@@ -23,40 +23,48 @@ print(folder)
 mesh_path = os.path.join(folder,"mesh",mesh_name +".h5")
 print(mesh_path)
 
-# Read in original FSI mesh
-mesh = Mesh()
-hdf = HDF5File(mesh.mpi_comm(), mesh_path, "r")
-hdf.read(mesh, "/mesh", False)
 
-domains = MeshFunction("size_t", mesh, 3)
-hdf.read(domains, "/domains")
-'''
-# Read in boundaries, only if creating boundaries for output mesh
-if "refined" not in mesh_path:
-    boundaries = MeshFunction("size_t", mesh, 2)
-    hdf.read(boundaries, "/boundaries")
-'''
-# Extract fluid part of Mesh
-mesh_fluid = SubMesh(mesh,domains,1)
-	
-# Create path for fluid mesh
-fluid_mesh_path = mesh_path.replace(".h5","_fluid_only.h5")
+try:
+    # Read in original FSI mesh
+    mesh = Mesh()
+    hdf = HDF5File(mesh.mpi_comm(), mesh_path, "r")
+    hdf.read(mesh, "/mesh", False)
+    
+    domains = MeshFunction("size_t", mesh, 3)
+    hdf.read(domains, "/domains")
+    '''
+    # Read in boundaries, only if creating boundaries for output mesh
+    if "refined" not in mesh_path:
+        boundaries = MeshFunction("size_t", mesh, 2)
+        hdf.read(boundaries, "/boundaries")
+    '''
+    # Extract fluid part of Mesh
+    mesh_fluid = SubMesh(mesh,domains,1)
+    	
+    # Create path for fluid mesh
+    fluid_mesh_path = mesh_path.replace(".h5","_fluid_only.h5")
+    
+    # Save refined mesh
+    hdf = HDF5File(mesh_fluid.mpi_comm(), fluid_mesh_path, "w")
+    hdf.write(mesh_fluid, "/mesh")
+    
+    print("fluid-only mesh saved to:")
+    print(fluid_mesh_path)    
+    
+    hdf.close()
+    
+    # This created mesh may have different node numbering than the original mesh. This next line fixes the node numbering
+    #  so that it starts at 0 and matches the separate domain "velocity.h5" file we create later. 
+    common_meshing.fix_fluid_only_mesh(mesh_path)
+    
+    print("Fixed fluid-only mesh wih correct node numbering. Mesh saved to:")
+    print(fluid_mesh_path)    
+except:
+    print("Fluid Mesh Creation Failed")
+    fluid_mesh_path = mesh_path.replace(".h5","_fluid_only.h5")
+    if os.path.exists(fluid_mesh_path):
+        os.remove(fluid_mesh_path)
 
-# Save refined mesh
-hdf = HDF5File(mesh_fluid.mpi_comm(), fluid_mesh_path, "w")
-hdf.write(mesh_fluid, "/mesh")
-
-print("fluid-only mesh saved to:")
-print(fluid_mesh_path)    
-
-hdf.close()
-
-# This created mesh may have different node numbering than the original mesh. This next line fixes the node numbering
-#  so that it starts at 0 and matches the separate domain "velocity.h5" file we create later. 
-common_meshing.fix_fluid_only_mesh(mesh_path)
-
-print("Fixed fluid-only mesh wih correct node numbering. Mesh saved to:")
-print(fluid_mesh_path)    
 '''
 # For non-refined mesh, we want to get the boundaries for performing flow rate calculations. 
 if "refined" not in mesh_path:

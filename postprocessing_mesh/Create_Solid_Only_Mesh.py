@@ -14,37 +14,42 @@ from dolfin import *  # Import order is important here for some reason... import
 folder, mesh_name = common_meshing.read_command_line()
 mesh_path = os.path.join(folder,"mesh",mesh_name +".h5")
 
-# Read in original FSI mesh
-mesh = Mesh()
-hdf = HDF5File(mesh.mpi_comm(), mesh_path, "r")
-hdf.read(mesh, "/mesh", False)
-
-domains = MeshFunction("size_t", mesh, 3)
-hdf.read(domains, "/domains")
-
-# Extract solid part of Mesh
-mesh_solid = SubMesh(mesh,domains,2)
-
-# Create path for refined mesh
-solid_mesh_path = mesh_path.replace(".h5","_solid_only.h5")
-
-# Save refined mesh
-hdf = HDF5File(mesh_solid.mpi_comm(), solid_mesh_path, "w")
-hdf.write(mesh_solid, "/mesh")
-#hdf.write(boundaries, "/boundaries")
-
-print("Solid mesh saved to:")
-print(solid_mesh_path)    
-
-hdf.close()
-
-# This created mesh may have different node numbering than the original mesh. This next line fixes the node numbering
-#  so that it starts at 0 and matches the separate domain "displacement.h5" file we create later. 
-common_meshing.fix_solid_only_mesh(mesh_path)
-
-print("Fixed solid-only mesh wih correct node numbering. Mesh saved to:")
-print(solid_mesh_path)    
-
+try:
+    # Read in original FSI mesh
+    mesh = Mesh()
+    hdf = HDF5File(mesh.mpi_comm(), mesh_path, "r")
+    hdf.read(mesh, "/mesh", False)
+    
+    domains = MeshFunction("size_t", mesh, 3)
+    hdf.read(domains, "/domains")
+    
+    # Extract solid part of Mesh
+    mesh_solid = SubMesh(mesh,domains,2)
+    
+    # Create path for refined mesh
+    solid_mesh_path = mesh_path.replace(".h5","_solid_only.h5")
+    
+    # Save refined mesh
+    hdf = HDF5File(mesh_solid.mpi_comm(), solid_mesh_path, "w")
+    hdf.write(mesh_solid, "/mesh")
+    #hdf.write(boundaries, "/boundaries")
+    
+    print("Solid mesh saved to:")
+    print(solid_mesh_path)    
+    
+    hdf.close()
+    
+    # This created mesh may have different node numbering than the original mesh. This next line fixes the node numbering
+    #  so that it starts at 0 and matches the separate domain "displacement.h5" file we create later. 
+    common_meshing.fix_solid_only_mesh(mesh_path)
+    
+    print("Fixed solid-only mesh wih correct node numbering. Mesh saved to:")
+    print(solid_mesh_path)    
+except:
+    print("Solid Mesh Creation Failed")
+    solid_mesh_path = mesh_path.replace(".h5","_solid_only.h5")
+    if os.path.exists(solid_mesh_path):
+        os.remove(solid_mesh_path)
 ### Read fixed mesh
 #mesh_solid_fixed = Mesh()
 #hdf = HDF5File(mesh_solid_fixed.mpi_comm(), solid_mesh_path, "r")

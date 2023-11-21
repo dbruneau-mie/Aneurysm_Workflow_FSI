@@ -63,10 +63,24 @@ def fix_fluid_only_mesh(meshFile):
     # Copy mesh file to new "fixed" file
     fluid_mesh_path =  meshFile.replace(".h5","_fluid_only.h5")    
     fluid_mesh_path_fixed =  meshFile.replace(".h5","_fluid_only_fixed.h5")    
-
     # Fix Fluid topology
-    for node_id in range(len(fluidIDs)):
-        fluidTopology = np.where(fluidTopology == fluidIDs[node_id], node_id, fluidTopology)
+    #for node_id in range(len(fluidIDs)):
+    #    fluidTopology = np.where(fluidTopology == fluidIDs[node_id], node_id, fluidTopology)
+    #    print(fluidIDs[node_id])
+
+    old_ids = fluidIDs
+    new_ids = range(len(fluidIDs))
+    dict_replace = {}
+    for A, B in zip(old_ids,new_ids):
+        dict_replace[A] = B
+
+    def replace(element):
+        return dict_replace.get(element, element)
+    # Vectorize the function
+    vfunc = np.vectorize(replace)
+
+    # Apply the function to our array
+    fluidTopologyFixed = vfunc(fluidTopology)
 
     shutil.copyfile(fluid_mesh_path, fluid_mesh_path_fixed)
 
@@ -76,7 +90,7 @@ def fix_fluid_only_mesh(meshFile):
     geoArray = vectorData["mesh/coordinates"]
     geoArray[...] = coordArrayFluid
     topoArray = vectorData["mesh/topology"]
-    topoArray[...] = fluidTopology
+    topoArray[...] = fluidTopologyFixed
     vectorData.close() 
 
     os.remove(fluid_mesh_path)
@@ -104,9 +118,21 @@ def fix_solid_only_mesh(meshFile):
     solid_mesh_path_fixed =  meshFile.replace(".h5","_solid_only_fixed.h5")    
 
     # Fix Wall topology
-    for node_id in range(len(wallIDs)):
-        wallTopology = np.where(wallTopology == wallIDs[node_id], node_id, wallTopology)
+    #for node_id in range(len(wallIDs)):
+    #    wallTopology = np.where(wallTopology == wallIDs[node_id], node_id, wallTopology)
+    old_ids = wallIDs
+    new_ids = range(len(wallIDs))
+    dict_replace = {}
+    for A, B in zip(old_ids,new_ids):
+        dict_replace[A] = B
 
+    def replace(element):
+        return dict_replace.get(element, element)
+    # Vectorize the function
+    vfunc = np.vectorize(replace)
+
+    # Apply the function to our array
+    wallTopologyFixed = vfunc(wallTopology)
     shutil.copyfile(solid_mesh_path, solid_mesh_path_fixed)
 
     # Replace all the arrays in the "fixed" file with the correct node numbering and topology
@@ -115,7 +141,7 @@ def fix_solid_only_mesh(meshFile):
     geoArray = vectorData["mesh/coordinates"]
     geoArray[...] = coordArraySolid
     topoArray = vectorData["mesh/topology"]
-    topoArray[...] = wallTopology
+    topoArray[...] = wallTopologyFixed
     vectorData.close() 
 
     os.remove(solid_mesh_path)

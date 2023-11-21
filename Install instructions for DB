@@ -1,0 +1,13 @@
+python3 -m pip install --editable .
+
+conda env update -n fispy --file environment.yml
+
+conda env update -n fispy_env --file environment.yml
+
+
+conda env update -n fispy_numba --file environment.yml
+
+https://github.com/KVSlab/Aneurysm_Workflow_FSI/blob/master/.flake8
+
+git worktree
+Conda env update -n fsipy_env -f environment.yml

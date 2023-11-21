@@ -354,6 +354,7 @@ def get_spectrogram(dfNearest,fsamp,nWindow,overlapFrac,window,start_t,end_t, sc
 
     '''
     NFFT = shift_bit_length(int(dfNearest.shape[1]/nWindow)) # Could change to /5
+    print(NFFT, "is the actual number of windows???")
     #print(dfNearest.shape[0])
 
     if dfNearest.shape[0] > 1:

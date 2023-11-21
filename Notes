@@ -1,0 +1,5 @@
+# NOTE
+
+https://stackoverflow.com/questions/5724455/can-i-make-a-user-specific-gitignore-file
+
+.git/info/exclude is now being used instead of .gitignore
