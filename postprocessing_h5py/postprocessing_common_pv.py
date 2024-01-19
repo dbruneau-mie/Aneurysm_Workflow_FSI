@@ -117,7 +117,6 @@ def assemble_mesh(mesh_file):
         celltypes[:] = vtk.VTK_TETRA
         cell_type = np.ones((cells.shape[0], 1), dtype=int) * 4
         cells = np.concatenate([cell_type, cells], axis = 1)
-        print(cells)
 
         mesh = pv.UnstructuredGrid(cells.ravel(), celltypes, points)
         surf = mesh.extract_surface()
@@ -140,7 +139,6 @@ def assemble_mesh_domains(mesh_file):
         celltypes[:] = vtk.VTK_TETRA
         cell_type = np.ones((cells.shape[0], 1), dtype=int) * 4
         cells = np.concatenate([cell_type, cells], axis = 1)
-        print(cells)
 
         mesh = pv.UnstructuredGrid(cells.ravel(), celltypes, points)
         surf = mesh.extract_surface()
@@ -154,7 +152,6 @@ def assemble_mesh_arrays(points, cells):
     celltypes[:] = vtk.VTK_TETRA
     cell_type = np.ones((cells.shape[0], 1), dtype=int) * 4
     cells = np.concatenate([cell_type, cells], axis = 1)
-    print(cells)
     mesh = pv.UnstructuredGrid(cells.ravel(), celltypes, points)
     surf = mesh.extract_surface()
 

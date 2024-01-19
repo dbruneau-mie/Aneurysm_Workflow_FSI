@@ -37,8 +37,8 @@ start_t=0.0 #2.853
 
 simDir="/scratch/s/steinman/dbruneau/7_0_Surgical/Pulsatile_Ramp_Cases_FC"
 simDir="/scratch/s/steinman/dbruneau/7_0_Surgical/Pulsatile_Ramp_Cases_FC"
-ylim_v = 0.2
-ylim_d = 1.4
+ylim_v = 0.3
+ylim_d = 1.5
 end_t=  3.65 # 5.55
 plt_name="_puls"
 

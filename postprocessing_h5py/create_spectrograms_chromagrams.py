@@ -129,13 +129,11 @@ def create_spectrogram_composite(case_name, dvp, df, start_t, end_t,
     # Calculate chromagram
     norm="sum" # normalize so that all chroma in column sum to 1 (other option is "max", which sets the max value in each column to 1)
     chroma = spec.chromagram_from_spectrogram(Pxx_raw,fs,n_fft,n_chroma=n_chroma,norm=norm)
-    if power_scaled == True:
-        chroma_power = (chroma)*(Pxx.max(axis=0)-thresh_val)
-        # Plot chromagram
-        spec.plot_chromagram(fig1,ax3,bins_raw,chroma_power)
-    else:
-        # Plot chromagram
-        spec.plot_chromagram(fig1,ax3,bins_raw,chroma)
+
+
+
+    # Plot chromagram
+    spec.plot_chromagram(fig1,ax3,bins_raw,chroma)
     # Hack to make all the x axes of the subplots align
     divider2 = make_axes_locatable(ax4)
     cax2 = divider2.append_axes("right", size="5%", pad=0.9)
@@ -145,7 +143,25 @@ def create_spectrogram_composite(case_name, dvp, df, start_t, end_t,
     chroma_entropy = spec.calc_chroma_entropy(chroma,n_chroma)
     # Plot SBI
     if power_scaled == True:
-        chroma_entropy_power = (chroma_entropy)*(Pxx.max(axis=0)-thresh_val)
+        chroma_entropy_power = (chroma_entropy)*(Pxx.max(axis=0)-thresh_val)/(Pxx.max()-thresh_val)
+        
+        #print("chroma entropy")
+        #print(chroma_entropy)
+        #print("Power Scaled Choma Entropy")
+        #print((chroma_entropy)*(Pxx.max(axis=0)-thresh_val))
+        #print("Power Scaled Choma Entropy(normalized by max)")
+        #print(chroma_entropy_power)
+        #print("Pxx size")
+        #print(Pxx.size)
+        #print("Pxx Column Max")
+        #print(Pxx.max(axis=0))
+        #print("Pxx Max (numpy)")
+        #print(Pxx.max())
+        #print(np.max(Pxx))
+
+
+
+
         # Plot chromagram
         ax4.plot(bins,chroma_entropy_power)
     else:
@@ -213,12 +229,16 @@ def create_spectrogram_composite(case_name, dvp, df, start_t, end_t,
     np.savetxt(path_csv, data_csv,header=bins_txt, delimiter=",")
 
     fullname = dvp+"_"+case_name + '_'+str(nWindow)+'_windows_'+'_SBI'
+    if power_scaled == True:
+        fullname = fullname + "_power_scaled"
     path_to_SBI = os.path.join(imageFolder, fullname + '.png')
     path_csv = path_to_SBI.replace(".png",".csv")
     #freqs_txt = np.array2string(freqs, precision=2, separator=',',)
-    print(bins)
-    print(chroma_entropy)
-    data_csv = np.array([bins,chroma_entropy]).T
+    if power_scaled == True:
+        data_csv = np.array([bins,chroma_entropy_power]).T
+    else: 
+        data_csv = np.array([bins,chroma_entropy]).T
+
     np.savetxt(path_csv, data_csv,header="t (s), SBI", delimiter=",")
     #bins_raw,chroma
 

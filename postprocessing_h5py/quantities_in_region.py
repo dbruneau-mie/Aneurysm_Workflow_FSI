@@ -176,7 +176,7 @@ def create_visualizations(case_path, mesh_name, save_deg, start_t, end_t, sampli
     sac_diameter = (6*sac_volume/3.14159)**(1/3)
     sac_radius = sac_diameter/2000
     # 2 Read in Amp h5 files
-    for Amp_filename in ["displacement_amplitude_25_to_1400.h5","pressure_amplitude_25_to_1400.h5","velocity_amplitude_25_to_1400.h5"]:
+    for Amp_filename in ["pressure_amplitude_25_to_1400.h5","velocity_amplitude_25_to_1400.h5"]:
         
         Amp_file = os.path.join(visualization_hi_pass_folder, Amp_filename)
         Amp_csv = Amp_file.replace(".h5",".csv")
@@ -195,7 +195,24 @@ def create_visualizations(case_path, mesh_name, save_deg, start_t, end_t, sampli
         print(index_max)
 
         # Get original amplitude data and build mesh
-        Amp_data = postprocessing_common_pv.get_data_at_idx(Amp_file,index_max)
+        #Amp_data = postprocessing_common_pv.get_data_at_idx(Amp_file,index_max)
+        if "pressure" in Amp_filename:
+            dvp = "p"
+        elif "displacement" in Amp_filename:
+            dvp = "d"
+        elif "velocity" in Amp_filename:
+            dvp = "v"
+
+        Amp_data_series = postprocessing_common_h5py.create_transformed_matrix(Amp_file, _ ,mesh_path, case_name, start_t,end_t,dvp,stride=10,return_data=True)
+        print(Amp_data_series.shape)
+
+        #print(np.mean(Amp_data_series,axis=0).shape)
+        #print(np.mean(Amp_data_series,axis=1).shape)
+        Amp_data = np.mean(Amp_data_series,axis=2)
+
+        #for i in range(1000):
+        #    dummy_data = postprocessing_common_pv.get_data_at_idx(Amp_file,i)
+        #    print(i)
         vectorData = h5py.File(Amp_file) 
         points = np.array(vectorData["Mesh/0/mesh/geometry"])
         element_connectivity = np.array(vectorData["Mesh/0/mesh/topology"])

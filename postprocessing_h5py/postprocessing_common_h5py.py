@@ -1018,16 +1018,10 @@ def create_fixed_xdmf_file(time_values,nElements,nNodes,attType,viz_type,h5_file
     xdmf_file.close() 
 
 
-def create_transformed_matrix(input_path, output_folder,meshFile, case_name, start_t,end_t,dvp,stride=1):
+def create_transformed_matrix(input_path, output_folder,meshFile, case_name, start_t,end_t,dvp,stride=1,return_data=False):
     # Create name for case, define output path
     print('Creating matrix for case {}...'.format(case_name))
-    output_folder = output_folder
 
-    # Create output directory
-    if os.path.exists(output_folder):
-        print('Path exists')
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
 
     # Get node ids from input mesh. If save_deg = 2, you can supply the original mesh to get the data for the 
     # corner nodes, or supply a refined mesh to get the data for all nodes (very computationally intensive)
@@ -1036,7 +1030,10 @@ def create_transformed_matrix(input_path, output_folder,meshFile, case_name, sta
         ids = allIDs
 
     # Get name of xdmf file
-    if dvp == 'd':
+    if ".h5" in input_path:
+        xdmf_file = input_path.replace(".h5",".xdmf")
+        input_path = os.path.dirname(input_path)
+    elif dvp == 'd':
         xdmf_file = input_path + '/displacement.xdmf' # Change
     elif dvp == 'v':
         xdmf_file = input_path + '/velocity.xdmf' # Change
@@ -1166,32 +1163,44 @@ def create_transformed_matrix(input_path, output_folder,meshFile, case_name, sta
     # Remove blank columns
     if dvp == "d" or dvp == "v":
         formatted_data = [dvp_magnitude,dvp_x,dvp_y,dvp_z]
+        formatted_data_return_data = [dvp_x,dvp_y,dvp_z]
+
         component_names = ["mag","x","y","z"]
     elif dvp == "strain":
         formatted_data = [dvp_11,dvp_12,dvp_22,dvp_23,dvp_33,dvp_31]
         component_names = ["11","12","22","23","33","31"]
     else:
+        formatted_data_return_data = dvp_magnitude
         component_names = ["mag"]
 
-    for i in range(len(component_names)):
+    if return_data == True:
+        return np.array(formatted_data_return_data)
 
-        # Create output path
-        component = dvp+"_"+component_names[i]
-        output_file_name = case_name+"_"+ component+'.npz'  
-        output_path = os.path.join(output_folder, output_file_name) 
-
-        # Remove old file path
-        if os.path.exists(output_path):
-            print('File path exists; rewriting')
-            os.remove(output_path)
-
-        # Store output in npz file
-        if dvp == "v" or dvp =="d" or dvp =="strain":
-            np.savez_compressed(output_path, component=formatted_data[i])
-        else:
-            np.savez_compressed(output_path, component=dvp_magnitude)
-
-    return time_between_files
+    else: 
+        # Create output directory
+        if os.path.exists(output_folder):
+            print('Path exists')
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        for i in range(len(component_names)):
+        
+            # Create output path
+            component = dvp+"_"+component_names[i]
+            output_file_name = case_name+"_"+ component+'.npz'  
+            output_path = os.path.join(output_folder, output_file_name) 
+    
+            # Remove old file path
+            if os.path.exists(output_path):
+                print('File path exists; rewriting')
+                os.remove(output_path)
+    
+            # Store output in npz file
+            if dvp == "v" or dvp =="d" or dvp =="strain":
+                np.savez_compressed(output_path, component=formatted_data[i])
+            else:
+                np.savez_compressed(output_path, component=dvp_magnitude)
+    
+        return time_between_files
 
 def get_time_between_files(input_path, output_folder,meshFile, case_name, dvp,stride=1):
     # Create name for case, define output path

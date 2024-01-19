@@ -3,3 +3,7 @@
 https://stackoverflow.com/questions/5724455/can-i-make-a-user-specific-gitignore-file
 
 .git/info/exclude is now being used instead of .gitignore
+
+flake8 src/fsipy/simulations/cylinder.py 
+python3 -m flake8 src/fsipy/simulations/cylinder.py 
+black cylinder.py 

@@ -100,8 +100,8 @@ plotter.add_points(mesh_refined.points,point_size=20,render_points_as_spheres=Tr
 #                )
 
 #plotter.add_ruler(pointa=[surf.bounds[0], surf.bounds[2] - 0.0001, 0.0], pointb=[surf.bounds[1], surf.bounds[2] - 0.0001, 0.0], title="X Distance")
-plotter.show_bounds(grid='front', location='outer',  all_edges=True)
-plotter.camera.zoom(0.3)
+plotter.show_bounds(grid='front',  all_edges=True)
+#plotter.camera.zoom(0.3)
 plotter.set_background('white')
 
 plotter.show(auto_close=False)  
@@ -109,6 +109,7 @@ plotter.show(auto_close=False)
 if det_cam_position == 1:
     plotter.show(auto_close=False) 
     print(plotter.camera_position)
+    plotter.show(screenshot=image_path)  
 else:
     plotter.camera_position = cpos
     plotter.show(screenshot=image_path)  
